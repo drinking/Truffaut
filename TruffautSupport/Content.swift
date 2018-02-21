@@ -15,6 +15,8 @@ public enum Content {
         case swift
         case shell
         case javaScript
+        case java
+        case objc
         case c
     }
     

@@ -17,7 +17,9 @@ public struct Presentation: Codable {
     public init(title: String = "", authors: [String] = [], pages: [Page]) {
         self.title = title
         self.authors = authors
-        self.pages = pages
+        self.pages = pages.flatMap({ (page) -> [Page] in
+            return page.flatNext()
+        })
         
         // dump self as a JSON String to STDOUT
         dump()

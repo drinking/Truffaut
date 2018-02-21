@@ -14,6 +14,10 @@ when 'javaScript'
   lexer = Rouge::Lexers::Javascript.new
 when 'c'
   lexer = Rouge::Lexers::C.new
+when 'objc'
+  lexer = Rouge::Lexers::ObjectiveC.new
+when 'java'
+  lexer = Rouge::Lexers::Java.new
 end
 
 formatter = Rouge::Formatters::HTMLInline.new Rouge::Themes::MonokaiSublime.new

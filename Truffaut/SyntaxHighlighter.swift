@@ -13,11 +13,14 @@ struct SyntaxHighlighter {
     
     private static let syntaxHighlightingQueue = DispatchQueue(label: "com.codezerker.truffaut.syntaxHighlighting",
                                                                attributes: .concurrent)
+    private static var cache = [Int:NSAttributedString]()
     
     static func highlight(sourceCode: String,
                           ofType type: Content.FileType,
                           withFont font: NSFont,
                           completion: @escaping (NSAttributedString?) -> Void) {
+        
+        completion(cache[sourceCode.hashValue])
         syntaxHighlightingQueue.async {
             guard let scriptPath = Bundle.main.path(forResource: "syntax-hl", ofType: "rb") else {
                 DispatchQueue.main.async {
@@ -40,7 +43,12 @@ struct SyntaxHighlighter {
                 }
                 output.removeLast() // remove '\n'
                 
-                let result = self.attributedString(from: output, font: font)
+                guard let result = self.attributedString(from: output, font: font),
+                     result != cache[sourceCode.hashValue] else {
+                    return
+                }
+
+                cache[sourceCode.hashValue] = result
                 DispatchQueue.main.async {
                     completion(result)
                 }
@@ -56,7 +64,7 @@ struct SyntaxHighlighter {
         let renderableString = htmlString.replacingOccurrences(of: "\n", with: "<br>")
                                          .replacingOccurrences(of: "  ", with: "&nbsp;&nbsp;")
         guard let htmlData = renderableString.data(using: .utf8),
-              let attrString = NSMutableAttributedString(html: htmlData, baseURL: URL(string: "/")!, documentAttributes: nil) else {
+                let attrString = NSMutableAttributedString(html: htmlData, options: [.characterEncoding: String.Encoding.utf8.rawValue], documentAttributes: nil) else {
             return nil
         }
         let fullStringRange = NSRange(location: 0, length: attrString.length)

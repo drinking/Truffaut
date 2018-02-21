@@ -16,8 +16,17 @@ class SlidesViewController: NSViewController {
     fileprivate var currentPage = 0
     fileprivate weak var currentPageViewController: PageViewController?
     
+    fileprivate var preloaded = false
     fileprivate var presentation: Presentation? {
-        return (windowController?.document as? PresentationDocument)?.presentation
+        guard let p = (windowController?.document as? PresentationDocument)?.presentation else {
+            return nil
+        }
+        
+        if(!preloaded) {
+            preCodeHighlight(p)
+            preloaded = true
+        }
+        return p
     }
     
     fileprivate var fileName: String? {
@@ -125,5 +134,36 @@ extension SlidesViewController {
         
         self.currentPage = index
         self.currentPageViewController = pageViewController
+    }
+    
+    func preCodeHighlight(_ presentation:Presentation) {
+        
+        func highlighting(_ content:Content) {
+            switch (content) {
+            case .indent(let nestedContents):
+                for nestedContent in nestedContents {
+                    highlighting(nestedContent)
+                }
+            case .sourceCode(let fileType, let source):
+                switch fileType {
+                case .plainText: break
+                default:
+                    SyntaxHighlighter.highlight(sourceCode: source,
+                                                ofType: fileType,
+                                                withFont: Font.Page.source) { result in
+                    }
+                }
+            default:
+                break
+            }
+        }
+        
+        DispatchQueue.main.async {
+            for page in presentation.pages {
+                for content in page.contents ?? [] {
+                    highlighting(content)
+                }
+            }
+        }
     }
 }
